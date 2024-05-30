@@ -1,0 +1,191 @@
+---
+title: "MLMB_Rcode"
+author: "Tatiana Lenskaia"
+date: "5/9/2021"
+output: html_document
+---
+
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R code for session 2 of MLMB workshop
+
+
+
+## Data read-in and preprocessing
+```{r}
+
+# Set the working folder
+# setwd("")
+
+# Load packages
+library(randomForest)
+library(caret)
+
+# Read-in data
+d <- read.table("40_pathogen_labels.csv",header=T,sep=",")
+
+# Take a look at the data and check dimensions
+View(d)
+dim(d)
+
+
+# Remove NCBI_ID 
+data <- d[,2:174]
+dim(data)
+
+# Labels as factor
+data$Pathogen <- as.factor(data$Pathogen)
+```
+
+
+
+## Random Forest for binary classification
+```{r}
+
+#Random split (train 80% - test 20%)
+
+sample_size = floor(0.8*nrow(data))
+sample_size
+
+
+set.seed(111)
+
+# Randomly split data
+picked = sample(seq_len(nrow(data)),size = sample_size)
+data_train =data[picked,]
+data_test =data[-picked,]
+
+# RandomForest for binary classification
+m <- randomForest(data_train[-173], data_train$Pathogen, ntree =500, mtry = 6)
+m
+
+# Predict pathogenicity class label (0 - non-pathogenic, 1 - pathogenic)
+p <- predict(m, data_test[-173],type = "response")
+res <- table(p, data_test$Pathogen, dnn = c("predicted","true"))
+res
+
+accuracy <- (7+11)/(3+7+11)
+accuracy
+
+# Another way to compute accuracy
+accuracy <- mean(p == data_test$Pathogen)
+accuracy
+
+# Predict probability of being a member of a given class
+p <- predict(m, data_test[-173],type = "prob")
+res <- cbind(p, as.numeric(levels(data_test$Pathogen))[data_test$Pathogen])
+res
+```
+
+
+
+# Mtry parameter
+```{r}
+
+m <- randomForest(data_train[-173], data_train$Pathogen, ntree =500, mtry = 172)
+m
+
+m <- randomForest(data_train[-173], data_train$Pathogen, ntree =500, mtry = sqrt(172))
+m
+
+m <- randomForest(data_train[-173], data_train$Pathogen, ntree =500, mtry = 3)
+m
+
+```
+
+## Cross-validation
+```{r}
+
+folds <- createFolds(data$Pathogen, k = 10)
+
+m_results <- lapply(folds, function(x) {
+  data_train <- data[-x, ]
+  data_test <- data[x, ]
+  m <- randomForest(data_train[-173], data_train$Pathogen, ntree =500, mtry = 6)
+
+
+
+  p <- predict(m, data_test[-173],type = "response")
+  res <- mean(p == data_test$Pathogen)
+
+  return (res)
+})
+
+
+m_results
+mean(unlist(m_results))
+
+# Saving the result
+write.csv(m_results, file = "res_matrix.csv", row.names = F)
+
+```
+
+# Reduced set of features - indicator phages
+
+```{r}
+
+#Random split (train 80% - test 20%)
+
+sample_size = floor(0.8*nrow(data))
+sample_size
+
+
+set.seed(111)
+
+# Randomly split data
+picked = sample(seq_len(nrow(data)),size = sample_size)
+data_train =data[picked,]
+data_test =data[-picked,]
+
+# RandomForest for binary classification
+m <- randomForest(data_train[-173], data_train$Pathogen, ntree =500, mtry = 6)
+m
+
+head(importance(m))
+varImpPlot(m,type=2)
+
+
+```
+
+# Performance on the set of indicator phages
+
+```{r}
+d <- read.table("40_pathogen(6phs)_labels.csv",header=T,sep=",")
+
+# Take a look at the data and check dimensions
+View(d)
+dim(d)
+
+# Remove NCBI_ID 
+data <- d[,2:8]
+dim(data)
+
+# Labels as factor
+data$Pathogen <- as.factor(data$Pathogen)
+
+
+#Random split (train 80% - test 20%)
+
+sample_size = floor(0.8*nrow(data))
+sample_size
+
+
+set.seed(111)
+
+# Randomly split data
+picked = sample(seq_len(nrow(data)),size = sample_size)
+data_train =data[picked,]
+data_test =data[-picked,]
+
+
+m <- randomForest(data_train[-7], data_train$Pathogen, ntree =500, mtry = 6)
+m
+
+```

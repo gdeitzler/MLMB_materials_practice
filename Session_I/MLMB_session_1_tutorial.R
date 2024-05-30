@@ -79,10 +79,10 @@ all(rownames(metadata) == colnames(otu))
 ## Filter out noisy features
 #remove OTUs with fewer than 10 reads
 ## rowSums -- gives sum for each row of dataframe
-otu <- otu[which(rowSums(otu)>=10),]
+otu <- otu[which(rowSums(otu)>=10),] #grace note - rows are OTUs
 dim(otu) #[1] 1542  282
 #remove OTUs which were present in fewer than 1% of samples
-otu <- otu[which(rowSums(otu>0) >= ncol(otu)*.01),]
+otu <- otu[which(rowSums(otu>0) >= ncol(otu)*.01),] #columns are samples
 dim(otu) #[1] 1319  282
 
 ## Binning

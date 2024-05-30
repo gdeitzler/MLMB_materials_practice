@@ -1,0 +1,9 @@
+E.coli genomes:
+https://www.ebi.ac.uk/genomes/bacteria.html
+
+Bacteriophage genomes:
+https://www.ebi.ac.uk/genomes/phage.html
+
+
+Batch genome download:
+https://www.ncbi.nlm.nih.gov/sites/batchentrez
